@@ -1,0 +1,34 @@
+-- The relational database is defined by these relations:
+-- PK = Primary Key, * = Foreign Key
+
+-- Location(location_id, name, address, capacity, type), PK: location_id
+-- Fair(fair_id, name, duration, location_id*), PK: fair_id
+-- Held_Fair(fair_id*, date), PK: fair_id, date
+-- Author(author_id, artistic_name, nationality), PK: author_id
+-- Publisher(publisher_id, name), PK: publisher_id
+-- Publisher_Sponsor(publisher_id*, sponsor), PK: publisher_id, sponsor
+-- Publisher_Promotion(author_id*, publisher_id*, start_date, end_date), PK: author_id, publisher_id, start_date
+-- Book_Promotion(fair_id*, date*, publisher_id*, author_id*, book_title, rating), PK: fair_id, date, publisher_id, author_id
+
+-- Solutions:
+-- 1.
+π Location.name (σ Location.capacity >= 5 (Location))
+
+-- 2.
+π Book_Promotion.book_title (Book_Promotion)
+
+-- 3.
+Location_Info = Fair ⨝ Fair.location_id = Location.location_id (Location)
+Book_Promotion_Info = Book_Promotion ⨝ Book_Promotion.fair_id = Fair.fair_id (Location_Info)
+Author_Info = Author ⨝ Author.author_id = Book_Promotion.author_id (Book_Promotion_Info)
+German_Authors = σ nationality = "German" (Author_Info)
+π artistic_name, Location.name (German_Authors)
+
+-- 4.
+(π publisher_id (Publisher_Sponsor)) ∪ (π publisher_id (Book_Promotion))
+
+-- 5.
+Sponsors ← ρ(publisher_id, count) γ publisher_id; count sponsor (Publisher_Sponsor)
+Sponsor_Filter = σ count > 3 (Sponsors)
+Book_Promotion_Filter = Book_Promotion ⨝ Book_Promotion.publisher_id = Sponsors.publisher_id (Sponsor_Filter)
+π book_title (Book_Promotion_Filter)
