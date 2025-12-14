@@ -15,7 +15,7 @@
 -- 1. Да се напише DML израз со кој за авторите што имаат презентирано книги на барем 2 саеми ќе се излистаат индексот на авторот,
 -- името на авторот и бројот на саеми на кои авторот има презентирано книги кои се карактеризираат со рејтинг помал од 6.
 
-SELECT DISTINCT author.author_id, author.artistic_name, COUNT(*) as number_of_fairs
+SELECT DISTINCT author.author_id, author.artistic_name, COUNT(*) AS number_of_fairs
 FROM Author author
 JOIN Book_Promotion bp ON bp.author_id = author.author_id AND hf.date = bp.date
 JOIN Held_Fair hf ON hf.fair_id = bp.fair_id
@@ -27,7 +27,7 @@ HAVING COUNT(*) >= 2
 -- Притоа треба да се прикаќат информациите за името на саемот, локацијата на која е одрќан саемот, како и бројот на книги кои биле промовирани/презентирани на тој саем.
 -- Резултатот треба да биде потреден според бројот на презентирани книги во растечки редослед.
 
-SELECT fair.name as fiar_name, location.name as location_name, COUNT(bp.book_title) as book_count
+SELECT fair.name AS fiar_name, location.name AS location_name, COUNT(bp.book_title) AS book_count
 FROM Fair fair
 JOIN Location location ON location.location_id = fair.location_id
 JOIN Book_Promotion bp ON bp.fair_id = fair.fair_id
@@ -52,8 +52,7 @@ JOIN Publisher_Promotion pp ON pp.author_id = author.author_id
 JOIN Publisher_Sponsor ps ON ps.publisher_id = pp.publisher_id
 GROUP BY author.author_id, author.artistic_name, pp.publisher_id
 HAVING COUNT(ps.sponsor) = (
-    SELECT MAX(sponsor_count)
-    FROM (
+    SELECT MAX(sponsor_count) FROM (
         SELECT COUNT(sponsor) AS sponsor_count
         FROM Publisher_Sponsor
         GROUP BY publisher_id
@@ -63,8 +62,7 @@ HAVING COUNT(ps.sponsor) = (
 -- 5. Да се напише DML израз со кој ќе се излистаат имињата на сите книги кои се презентирани на саем кој што се изведува на затворена локација (INDOOR)
 -- која има најголем капацитет за гости.Имињата на книгите треба да бидат сортирани во растечки редослед.
 
-SELECT DISTINCT bp.book_title
-FROM Book_Promotion bp
+SELECT DISTINCT bp.book_title FROM Book_Promotion bp
 JOIN Fair fair ON fair.fair_id = bp.fair_id
 JOIN Location location ON fair.location_id = location.location_id
 WHERE location.type = 'INDOOR'
@@ -83,7 +81,7 @@ ORDER BY bp.book_title ASC;
 
 WITH Data AS (
     SELECT
-        location.location_id as id,
+        location.location_id AS id,
         location.name AS location_name,
         author.artistic_name AS author_name,
         COUNT(bp.book_title) AS number_of_books,
