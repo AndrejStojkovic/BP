@@ -97,3 +97,68 @@ WITH Data AS (
 SELECT location_name, author_name, number_of_books, average_rating FROM Data d1
 WHERE (SELECT COUNT(*) FROM Data d2 WHERE d2.id = d1.id AND d2.average_rating > d1.average_rating) < 3
 ORDER BY location_name, average_rating DESC;
+
+-- 7. Да се напише DML израз со кој ќе се најде мрежата на мобилност чии проекти имаат најниско просечно траење.
+
+SELECT mn.id, mn.name, mn.start_date, mn.end_date FROM Mobility_Network mn
+JOIN Mobility_Project mp ON mp.network_id = mn.id
+GROUP BY mn.id
+HAVING AVG(mp.duration) = (
+    SELECT MIN(average) FROM (
+        SELECT AVG(duration) AS average FROM Mobility_Network
+        JOIN Mobility_Project ON network_id = id
+        GROUP BY id
+    )
+)
+
+-- 8. Да се напише DML израз со кој за секој универзитет ќе се претстави со колкав удел на студенти учествува во неговите мрежи на мобилност
+-- (број на различни студенти од универзитетот што учествувале во барем еден проект на мобилност во неговите мрежи на мобилност /
+-- број на различни студенти учесниви на проекти на мобилност во неговите мрежи на мобилност).
+-- Резултатите да се прикажат подредени според ID на универзитет.
+
+WITH Student_data AS (
+    SELECT u.id, COUNT(DISTINCT s.id) AS ct FROM University u
+    JOIN Student s ON s.university_id = u.id
+    JOIN Mobility_Project mp ON mp.student_id = s.id
+    JOIN Part_of po ON po.university_id = u.id AND po.network_id = mp.network_id
+    GROUP BY u.id
+),
+Project_data AS (
+    SELECT u.id, COUNT(DISTINCT mp.student_id) AS ct FROM University u
+    JOIN Part_of po ON po.university_id = u.id
+    JOIN Mobility_Network mn ON mn.id = po.network_id
+    JOIN Mobility_Project mp ON mp.network_id = mn.id
+    GROUP BY u.id
+)
+
+SELECT sd.id AS university_id, (sd.ct * 1.0 / pd.ct) AS percentage FROM Student_data sd
+JOIN Project_data pd ON pd.id = sd.id
+
+-- 9. Да се напише DML израз со кој за секој универзитет ќе се најде институтот со најмногу вработени.
+-- Резултатите да бидат подредени прво според името на универзитетот, а потоа според името на институтот.
+
+WITH Institute_Data AS (
+    SELECT
+        u.id AS university_id,
+        u.name AS university_name,
+        i.id AS institute_id,
+        i.name AS institute_name,
+        COUNT(sm.id) AS broj_vraboteni
+    FROM University u
+    JOIN Institute i ON i.university_id = u.id
+    JOIN Staff_Member sm ON sm.institute_id = i.id
+    GROUP BY u.id, i.id
+)
+
+SELECT
+    id.university_id,
+    id.university_name AS name,
+    id.institute_id,
+    id.institute_name AS name
+FROM Institute_Data id
+GROUP BY id.institute_name
+HAVING MAX(id.broj_vraboteni) = (
+    SELECT MAX(id2.broj_vraboteni) FROM Institute_Data id2
+    WHERE id.university_id = id2.university_id
+)
+ORDER BY id.university_id, id.institute_id
