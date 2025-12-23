@@ -10,9 +10,24 @@
 -- Sosedi(grad1*, grad2*, rastojanie), PK: grad1, grad2
 
 
-SELECT * FROM Mesto m
-JOIN Grad g ON g.id_mesto = m.id
-JOIN Poseta p ON p.id_mesto = g.id_mesto
-JOIN Objekt o ON o.id_grad = g.id_mesto
---GROUP BY m.id, m.ime
---TO-DO: Add having + count + max
+WITH Grad_so_max_poseti AS (
+    SELECT m.id FROM Mesto m
+    JOIN Grad g ON g.id_mesto = m.id
+    JOIN Poseta p ON p.id_mesto = g.id_mesto
+    JOIN Objekt o ON o.id_grad = g.id_mesto
+    GROUP BY m.id, g.id_mesto
+    HAVING COUNT(*) = (
+        SELECT MAX(broj_poseti) FROM (
+            SELECT COUNT(*) AS broj_poseti FROM Mesto m
+            JOIN Grad g ON g.id_mesto = m.id
+            JOIN Poseta p ON p.id_mesto = g.id_mesto
+            JOIN Objekt o ON o.id_grad = g.id_mesto
+            GROUP BY g.id_mesto
+        )
+    )
+)
+
+SELECT DISTINCT mesto.ime FROM Objekt objekt
+JOIN Mesto mesto ON mesto.id = objekt.id_mesto
+JOIN Grad_so_max_poseti grad ON objekt.id_grad = grad.id
+ORDER BY mesto.id ASC;
